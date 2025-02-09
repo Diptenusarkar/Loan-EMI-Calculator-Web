@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loan EMI Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -68,6 +69,7 @@
         <label>Annual Interest Rate (%): <input type="number" id="interest" required></label><br>
         <label>Loan Tenure (Years): <input type="number" id="tenure" required></label><br>
         <button onclick="calculateEMI()">Calculate</button>
+        <button onclick="downloadPDF()">Download PDF</button>
         <div class="results">
             <h3>Results</h3>
             <p>EMI: ₹<span id="emi"></span></p>
@@ -151,6 +153,24 @@
                 </tr>`;
                 scheduleBody.innerHTML += row;
             }
+        }
+
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            let doc = new jsPDF();
+            doc.text("Loan EMI Calculation Report", 20, 10);
+            doc.text(`EMI: ₹${document.getElementById("emi").textContent}`, 20, 20);
+            doc.text(`Total Interest: ₹${document.getElementById("totalInterest").textContent}`, 20, 30);
+            doc.text(`Total Payment: ₹${document.getElementById("totalPayment").textContent}`, 20, 40);
+
+            let rows = [];
+            document.querySelectorAll("#scheduleBody tr").forEach(row => {
+                let cols = row.querySelectorAll("td");
+                rows.push([cols[0].textContent, cols[1].textContent, cols[2].textContent, cols[3].textContent, cols[4].textContent]);
+            });
+
+            doc.autoTable({ head: [["Month", "EMI", "Principal", "Interest", "Remaining"]], body: rows, startY: 50 });
+            doc.save("Loan_EMI_Report.pdf");
         }
     </script>
 </body>
