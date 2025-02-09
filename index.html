@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan EMI Calculator</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+        }
+        input, button {
+            width: 90%;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results, .schedule {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Loan EMI Calculator</h2>
+        <label>Principal Amount (₹): <input type="number" id="principal" required></label><br>
+        <label>Annual Interest Rate (%): <input type="number" id="interest" required></label><br>
+        <label>Loan Tenure (Years): <input type="number" id="tenure" required></label><br>
+        <button onclick="calculateEMI()">Calculate</button>
+        <div class="results">
+            <h3>Results</h3>
+            <p>EMI: ₹<span id="emi"></span></p>
+            <p>Total Interest Payable: ₹<span id="totalInterest"></span></p>
+            <p>Total Amount Payable: ₹<span id="totalPayment"></span></p>
+        </div>
+        <div class="schedule">
+            <h3>Amortization Schedule</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>EMI (₹)</th>
+                        <th>Principal (₹)</th>
+                        <th>Interest (₹)</th>
+                        <th>Remaining (₹)</th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function calculateEMI() {
+            let principal = parseFloat(document.getElementById("principal").value);
+            let annualInterestRate = parseFloat(document.getElementById("interest").value);
+            let tenureYears = parseFloat(document.getElementById("tenure").value);
+
+            if (tenureYears <= 0 || principal <= 0) {
+                alert("Invalid input: Loan tenure and principal must be positive.");
+                return;
+            }
+            if (annualInterestRate < 0) {
+                alert("Invalid input: Interest rate cannot be negative.");
+                return;
+            }
+
+            let tenureMonths = Math.round(tenureYears * 12);
+            let monthlyInterestRate = annualInterestRate / 12 / 100;
+            let emi = (monthlyInterestRate === 0) ? (principal / tenureMonths) :
+                ((principal * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, tenureMonths)) /
+                (Math.pow(1 + monthlyInterestRate, tenureMonths) - 1));
+
+            emi = parseFloat(emi.toFixed(2));
+            let totalPayment = parseFloat((emi * tenureMonths).toFixed(2));
+            let totalInterest = parseFloat((totalPayment - principal).toFixed(2));
+
+            document.getElementById("emi").textContent = emi;
+            document.getElementById("totalInterest").textContent = totalInterest;
+            document.getElementById("totalPayment").textContent = totalPayment;
+
+            generateSchedule(principal, tenureMonths, monthlyInterestRate, emi);
+        }
+
+        function generateSchedule(principal, tenureMonths, monthlyInterestRate, emi) {
+            let scheduleBody = document.getElementById("scheduleBody");
+            scheduleBody.innerHTML = "";
+            let remainingPrincipal = principal;
+
+            for (let month = 1; month <= tenureMonths; month++) {
+                let interest = remainingPrincipal * monthlyInterestRate;
+                let principalPayment = emi - interest;
+
+                if (month === tenureMonths) {
+                    principalPayment = remainingPrincipal;
+                    interest = emi - principalPayment;
+                }
+
+                interest = parseFloat(interest.toFixed(2));
+                principalPayment = parseFloat(principalPayment.toFixed(2));
+                remainingPrincipal -= principalPayment;
+                remainingPrincipal = parseFloat(Math.max(remainingPrincipal, 0).toFixed(2));
+
+                let row = `<tr>
+                    <td>${month}</td>
+                    <td>₹${emi}</td>
+                    <td>₹${principalPayment}</td>
+                    <td>₹${interest}</td>
+                    <td>₹${remainingPrincipal}</td>
+                </tr>`;
+                scheduleBody.innerHTML += row;
+            }
+        }
+    </script>
+</body>
+</html>
